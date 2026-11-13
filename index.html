@@ -324,44 +324,52 @@ textarea {
 </div>
 
 <script>
-// KEEP YOUR EXISTING SUPABASE DETAILS HERE
+
 const SUPABASE_URL = "https://rvnotsdsuvfrcginjbiw.supabase.co";
 const SUPABASE_KEY = "sb_publishable_IIeNY6wKVAZpFREXPoqS8Q_4mXjivYf";
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = id => document.getElementById(id);
 
 let conversations = [];
 let currentId = null;
 let sending = false;
+let currentUserId = null;
 
-function saveHistory() {
-  localStorage.setItem(
-    "abd_ai_conversations",
-    JSON.stringify(conversations)
-  );
+function currentConversation() {
+  return conversations.find(c => c.id === currentId);
 }
 
-function newConversation() {
+async function saveConversation() {
+  const conversation = currentConversation();
+  if (!conversation || !currentUserId) return;
+
+  const { error } = await db.from("conversations").upsert({
+    id: conversation.id,
+    user_id: currentUserId,
+    title: conversation.title,
+    messages: conversation.messages,
+    updated_at: new Date().toISOString()
+  });
+
+  if (error) {
+    $("chatStatus").textContent = "Save error: " + error.message;
+  }
+}
+
+async function newConversation() {
   const conversation = {
-    id: Date.now().toString(),
+    id: crypto.randomUUID(),
     title: "New Chat",
     messages: [],
-    updated: Date.now()
+    updated_at: new Date().toISOString()
   };
 
   conversations.unshift(conversation);
   currentId = conversation.id;
-  saveHistory();
   render();
-}
-
-function currentConversation() {
-  return conversations.find(c => c.id === currentId);
+  await saveConversation();
 }
 
 function render() {
@@ -384,10 +392,9 @@ function render() {
   $("messages").replaceChildren();
 
   const list = conversation ? conversation.messages : [];
-
   $("welcome").classList.toggle("hidden", list.length > 0);
 
-  list.forEach((message, index) => {
+  list.forEach(message => {
     const div = document.createElement("div");
     div.className = "message " + message.role;
 
@@ -416,23 +423,52 @@ function render() {
 
     $("messages").appendChild(div);
   });
-
-  $("messages").scrollTop = $("messages").scrollHeight;
 }
 
-function addMessage(role, text) {
+async function addMessage(role, text) {
   const conversation = currentConversation();
   if (!conversation) return;
 
   conversation.messages.push({ role, text });
-  conversation.updated = Date.now();
 
   if (conversation.title === "New Chat" && role === "user") {
     conversation.title = text.slice(0, 30);
   }
 
-  saveHistory();
+  conversation.updated_at = new Date().toISOString();
+
   render();
+  await saveConversation();
+}
+
+async function loadHistory() {
+  $("chatStatus").textContent = "Loading your conversations...";
+
+  const { data, error } = await db
+    .from("conversations")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    $("chatStatus").textContent = "History error: " + error.message;
+    return;
+  }
+
+  conversations = (data || []).map(c => ({
+    id: c.id,
+    title: c.title || "New Chat",
+    messages: Array.isArray(c.messages) ? c.messages : [],
+    updated_at: c.updated_at
+  }));
+
+  if (conversations.length) {
+    currentId = conversations[0].id;
+    render();
+  } else {
+    await newConversation();
+  }
+
+  $("chatStatus").textContent = "ABD AI is ready.";
 }
 
 async function updateScreen() {
@@ -443,34 +479,24 @@ async function updateScreen() {
     return;
   }
 
-  const loggedIn = !!data.session;
+  const session = data.session;
+  const loggedIn = !!session;
+
   $("auth").classList.toggle("hidden", loggedIn);
   $("app").classList.toggle("hidden", !loggedIn);
 
-  if (loggedIn && !currentId) {
-    loadHistory();
-  }
-}
-
-function loadHistory() {
-  try {
-    conversations = JSON.parse(
-      localStorage.getItem("abd_ai_conversations") || "[]"
-    );
-    if (!Array.isArray(conversations)) conversations = [];
-  } catch {
+  if (loggedIn && currentUserId !== session.user.id) {
+    currentUserId = session.user.id;
     conversations = [];
+    currentId = null;
+    await loadHistory();
   }
 
-  if (conversations.length) {
-    conversations.sort((a,b) => b.updated - a.updated);
-    currentId = conversations[0].id;
-  } else {
-    newConversation();
-    return;
+  if (!loggedIn) {
+    currentUserId = null;
+    conversations = [];
+    currentId = null;
   }
-
-  render();
 }
 
 $("signup").onclick = async () => {
@@ -505,12 +531,11 @@ $("login").onclick = async () => {
 
 $("logout").onclick = async () => {
   await db.auth.signOut();
-  currentId = null;
   await updateScreen();
 };
 
-$("newChat").onclick = () => {
-  newConversation();
+$("newChat").onclick = async () => {
+  await newConversation();
   $("prompt").focus();
 };
 
@@ -520,16 +545,16 @@ async function sendMessage() {
   const message = $("prompt").value.trim();
   if (!message) return;
 
-  if (!currentConversation()) newConversation();
+  if (!currentConversation()) await newConversation();
 
   $("prompt").value = "";
-  addMessage("user", message);
-
   sending = true;
   $("send").disabled = true;
   $("chatStatus").textContent = "ABD AI is thinking...";
 
   try {
+    await addMessage("user", message);
+
     const { data, error } = await db.functions.invoke(
       "abd-ai-chat",
       { body: { message } }
@@ -541,7 +566,7 @@ async function sendMessage() {
       throw new Error(data?.error || "AI response was empty.");
     }
 
-    addMessage("assistant", data.reply);
+    await addMessage("assistant", data.reply);
     $("chatStatus").textContent = "Ready";
   } catch (err) {
     $("chatStatus").textContent = "Error: " + err.message;
@@ -562,10 +587,11 @@ $("prompt").addEventListener("keydown", event => {
 });
 
 db.auth.onAuthStateChange(() => {
-  updateScreen();
+  setTimeout(() => updateScreen(), 0);
 });
 
 updateScreen();
+    
 </script>
 </body>
 </html>
