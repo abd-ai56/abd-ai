@@ -555,10 +555,26 @@ async function sendMessage() {
   try {
     await addMessage("user", message);
 
-    const { data, error } = await db.functions.invoke(
-      "abd-ai-chat",
-      { body: { message } }
-    );
+    
+const conversation = currentConversation();
+
+const history = conversation.messages
+  .slice(0, -1)
+  .map(m => ({
+    role: m.role,
+    content: m.text
+  }));
+
+const { data, error } = await db.functions.invoke(
+  "abd-ai-chat",
+  {
+    body: {
+      message,
+      history
+    }
+  }
+);
+    
 
     if (error) throw error;
 
