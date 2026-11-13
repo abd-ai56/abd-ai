@@ -309,6 +309,9 @@ textarea {
       <div id="messages"></div>
 
       <div class="composer-area">
+        <button id="webSearchToggle" class="secondary" type="button">
+  🌐 Internet Search: OFF
+        </button>
         <div class="composer">
           <textarea id="prompt"
             placeholder="Message ABD AI..."
@@ -335,6 +338,16 @@ const $ = id => document.getElementById(id);
 let conversations = [];
 let currentId = null;
 let sending = false;
+  let webSearchEnabled = false;
+
+$("webSearchToggle").onclick = () => {
+  webSearchEnabled = !webSearchEnabled;
+
+  $("webSearchToggle").textContent =
+    webSearchEnabled
+      ? "🌐 Internet Search: ON"
+      : "🌐 Internet Search: OFF";
+};
 let currentUserId = null;
 
 function currentConversation() {
@@ -569,8 +582,9 @@ const { data, error } = await db.functions.invoke(
   "abd-ai-chat",
   {
     body: {
-      message,
-      history
+  message,
+  history,
+  web_search: webSearchEnabled
     }
   }
 );
