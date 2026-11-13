@@ -260,6 +260,73 @@ textarea {
   .topbar { padding: 14px; }
   .message { max-width: 100%; }
 }
+
+/* ABD AI - ChatGPT inspired theme */
+
+:root {
+  color-scheme: dark;
+  --bg: #212121;
+  --sidebar: #171717;
+  --surface: #303030;
+  --text: #ececec;
+  --muted: #a0a0a0;
+  --border: #3a3a3a;
+  --accent: #ffffff;
+}
+
+html, body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+aside, .sidebar {
+  background: var(--sidebar) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+main, .chat-area, .chat-container {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+header, nav {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+input, textarea, .composer, .composer-area {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+}
+
+button {
+  border-radius: 12px;
+}
+
+button:hover {
+  filter: brightness(1.15);
+}
+
+p, span, label {
+  color: inherit;
+}
+
+a {
+  color: #b4b4b4;
+}
+
+::placeholder {
+  color: var(--muted) !important;
+}
+
 </style>
 </head>
 
