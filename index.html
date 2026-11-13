@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b16">
+  <title>ABD AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #080b16;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .app { max-width: 850px; margin: auto; padding: 18px; }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #26304a;
+    }
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg,#2563eb,#9333ea);
+      font-size: 20px;
+      font-weight: bold;
+    }
+    h1 { font-size: 22px; margin: 0; }
+    .muted { color: #929bb1; font-size: 13px; }
+    .panel {
+      background: #111729;
+      border: 1px solid #27314a;
+      border-radius: 16px;
+      padding: 18px;
+      margin-top: 24px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: 1px solid #34405c;
+      background: #080e1e;
+      color: white;
+      font-size: 15px;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 18px;
+      background: #635bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 5px 3px 5px 0;
+    }
+    button:disabled { opacity: .5; }
+    .secondary { background: #27314a; }
+    #messages {
+      height: 55vh;
+      min-height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      padding: 12px 0;
+    }
+    .message {
+      padding: 13px;
+      border-radius: 13px;
+      max-width: 90%;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+    .user { background: #293c79; align-self: flex-end; }
+    .assistant { background: #1b263d; align-self: flex-start; }
+    .composer { display: flex; gap: 8px; align-items: center; }
+    .composer textarea { resize: vertical; min-height: 52px; margin: 0; }
+    .status { color: #a5b4fc; font-size: 13px; min-height: 20px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">ABD</div>
+    <div>
+      <h1>ABD AI</h1>
+      <div class="muted">Your personal AI assistant</div>
+    </div>
+  </header>
+
+  <section id="auth" class="panel">
+    <h2>Welcome to ABD AI</h2>
+    <p class="muted">Sign in or create your account.</p>
+    <input id="email" type="email" placeholder="Email address">
+    <input id="password" type="password" placeholder="Password">
+    <button id="signup">Create account</button>
+    <button id="login" class="secondary">Sign in</button>
+    <p id="authStatus" class="status"></p>
+  </section>
+
+  <section id="chat" class="panel" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 style="margin:0">Chat with ABD AI</h2>
+        <p class="muted">Ask me anything</p>
+      </div>
+      <button id="logout" class="secondary">Sign out</button>
+    </div>
+
+    <div id="messages">
+      <div class="message assistant">
+        Hello! I'm ABD AI. How can I help you today?
+      </div>
+    </div>
+
+    <div class="composer">
+      <textarea id="prompt" placeholder="Ask ABD AI anything..."></textarea>
+      <button id="send">Send</button>
+    </div>
+    <p id="chatStatus" class="status"></p>
+  </section>
+</div>
+
+<script>
+  // ADD YOUR OWN SUPABASE DETAILS HERE
+  const SUPABASE_URL = "https://rvnotsdsuvfrcginjbiw.supabase.co/rest/v1/";
+  const SUPABASE_KEY = "sb_publishable_IIeNY6wKVAZpFREXPoqS8Q_4mXjivYf";
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  const auth = document.getElementById("auth");
+  const chat = document.getElementById("chat");
+  const authStatus = document.getElementById("authStatus");
+  const chatStatus = document.getElementById("chatStatus");
+  const messages = document.getElementById("messages");
+  const sendButton = document.getElementById("send");
+
+  function showMessage(text, type) {
+    const div = document.createElement("div");
+    div.className = "message " + type;
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  async function updateScreen() {
+    const { data } = await db.auth.getSession();
+    const loggedIn = !!data.session;
+    auth.style.display = loggedIn ? "none" : "block";
+    chat.style.display = loggedIn ? "block" : "none";
+  }
+
+  document.getElementById("signup").onclick = async () => {
+    authStatus.textContent = "Creating account...";
+    const { error } = await db.auth.signUp({
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("password").value
+    });
+
+    authStatus.textContent = error
+      ? error.message
+      : "Account created! Check your email if verification is required.";
+
+    await updateScreen();
+  };
+
+  document.getElementById("login").onclick = async () => {
+    authStatus.textContent = "Signing in...";
+    const { error } = await db.auth.signInWithPassword({
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("password").value
+    });
+
+    authStatus.textContent = error ? error.message : "Signed in!";
+    await updateScreen();
+  };
+
+  document.getElementById("logout").onclick = async () => {
+    await db.auth.signOut();
+    await updateScreen();
+  };
+
+  document.getElementById("send").onclick = async () => {
+    const input = document.getElementById("prompt");
+    const message = input.value.trim();
+
+    if (!message || sendButton.disabled) return;
+
+    input.value = "";
+    showMessage(message, "user");
+    sendButton.disabled = true;
+    chatStatus.textContent = "ABD AI is thinking...";
+
+    try {
+      const { data, error } = await db.functions.invoke(
+        "abd-ai-chat",
+        { body: { message } }
+      );
+
+      if (error) throw error;
+
+      if (!data || !data.success) {
+        throw new Error(data?.error || "AI request failed.");
+      }
+
+      showMessage(data.reply, "assistant");
+      chatStatus.textContent = "Ready";
+    } catch (err) {
+      chatStatus.textContent = "Error: " + err.message;
+    } finally {
+      sendButton.disabled = false;
+    }
+  };
+
+  db.auth.onAuthStateChange(() => {
+    updateScreen();
+  });
+
+  updateScreen();
+</script>
+</body>
+</html>
