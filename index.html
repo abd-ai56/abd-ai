@@ -2,234 +2,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080b16">
-  <title>ABD AI</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #080b16;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    .app { max-width: 850px; margin: auto; padding: 18px; }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid #26304a;
-    }
-    .logo {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg,#2563eb,#9333ea);
-      font-size: 20px;
-      font-weight: bold;
-    }
-    h1 { font-size: 22px; margin: 0; }
-    .muted { color: #929bb1; font-size: 13px; }
-    .panel {
-      background: #111729;
-      border: 1px solid #27314a;
-      border-radius: 16px;
-      padding: 18px;
-      margin-top: 24px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 14px;
-      margin: 8px 0;
-      border-radius: 10px;
-      border: 1px solid #34405c;
-      background: #080e1e;
-      color: white;
-      font-size: 15px;
-    }
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 13px 18px;
-      background: #635bff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 5px 3px 5px 0;
-    }
-    button:disabled { opacity: .5; }
-    .secondary { background: #27314a; }
-    #messages {
-      height: 55vh;
-      min-height: 300px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 13px;
-      padding: 12px 0;
-    }
-    .message {
-      padding: 13px;
-      border-radius: 13px;
-      max-width: 90%;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      line-height: 1.5;
-    }
-    .user { background: #293c79; align-self: flex-end; }
-    .assistant { background: #1b263d; align-self: flex-start; }
-    .composer { display: flex; gap: 8px; align-items: center; }
-    .composer textarea { resize: vertical; min-height: 52px; margin: 0; }
-    .status { color: #a5b4fc; font-size: 13px; min-height: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090d18">
+<title>ABD AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #090d18;
+  color: #f5f7ff;
+  font-family: Arial, sans-serif;
+}
+
+button, textarea, input { font: inherit; }
+
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 15px;
+  color: white;
+  background: #625cff;
+}
+
+button:disabled { opacity: .5; }
+
+.app {
+  max-width: 1100px;
+  margin: auto;
+  min-height: 100vh;
+  display: flex;
+}
+
+.sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: #0e1423;
+  border-right: 1px solid #252e43;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.logo {
+  width: 43px;
+  height: 43px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-weight: bold;
+  background: linear-gradient(135deg,#2563eb,#9333ea);
+}
+
+.brand h2 { margin: 0; font-size: 20px; }
+
+.new-chat {
+  width: 100%;
+  background: #242d43;
+  border: 1px solid #35405a;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.small-title {
+  color: #8995ad;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+#history {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow-y: auto;
+}
+
+.history-item {
+  background: transparent;
+  text-align: left;
+  color: #c8d0e0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.history-item.active { background: #252e43; }
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  padding: 17px 20px;
+  border-bottom: 1px solid #252e43;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar h3 { margin: 0; font-size: 17px; }
+
+.content {
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  margin: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome {
+  text-align: center;
+  margin: auto 0;
+  padding: 35px 10px;
+}
+
+.welcome h1 { font-size: 32px; }
+
+.gradient {
+  background: linear-gradient(90deg,#60a5fa,#c084fc);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+#messages {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 25px;
+}
+
+.message {
+  padding: 15px;
+  border-radius: 14px;
+  max-width: 95%;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.user {
+  background: #263a70;
+  align-self: flex-end;
+}
+
+.assistant {
+  background: #171f32;
+  align-self: flex-start;
+}
+
+.message-actions { margin-top: 9px; }
+
+.message-actions button {
+  background: #303a50;
+  font-size: 12px;
+  padding: 7px 10px;
+}
+
+.composer-area {
+  position: sticky;
+  bottom: 0;
+  background: #090d18;
+  padding: 12px 0 18px;
+}
+
+.composer {
+  display: flex;
+  gap: 9px;
+  background: #151e30;
+  border: 1px solid #34405a;
+  border-radius: 15px;
+  padding: 9px;
+}
+
+textarea, input {
+  background: transparent;
+  color: white;
+  border: 0;
+  outline: none;
+  width: 100%;
+}
+
+textarea {
+  resize: none;
+  min-height: 45px;
+  max-height: 150px;
+  padding: 12px 5px;
+}
+
+.status {
+  color: #9ba8c2;
+  font-size: 12px;
+  min-height: 18px;
+  margin-top: 8px;
+}
+
+.auth-box {
+  max-width: 420px;
+  margin: 70px auto;
+  padding: 25px;
+  background: #151e30;
+  border: 1px solid #303b55;
+  border-radius: 17px;
+}
+
+.auth-box input {
+  padding: 14px;
+  margin: 8px 0;
+  border: 1px solid #34405a;
+  border-radius: 9px;
+  background: #090d18;
+}
+
+.auth-box button { margin-top: 10px; }
+
+.secondary { background: #303a50; }
+
+.hidden { display: none !important; }
+
+@media(max-width:650px) {
+  .sidebar {
+    width: 76px;
+    padding: 12px 7px;
+  }
+  .brand {
+    flex-direction: column;
+    gap: 5px;
+  }
+  .brand h2 { font-size: 10px; }
+  .new-chat {
+    text-align: center;
+    padding: 12px 3px;
+    font-size: 11px;
+  }
+  .small-title { font-size: 9px; text-align: center; }
+  .history-item {
+    font-size: 10px;
+    padding: 9px 3px;
+  }
+  .content { padding: 13px; }
+  .topbar { padding: 14px; }
+  .message { max-width: 100%; }
+}
+</style>
 </head>
+
 <body>
-<div class="app">
-  <header>
+
+<div id="auth" class="auth-box">
+  <div class="brand">
     <div class="logo">ABD</div>
-    <div>
-      <h1>ABD AI</h1>
-      <div class="muted">Your personal AI assistant</div>
+    <h2>ABD AI</h2>
+  </div>
+  <p>Welcome to your AI assistant.</p>
+  <input id="email" type="email" placeholder="Email address">
+  <input id="password" type="password" placeholder="Password">
+  <button id="signup">Create account</button>
+  <button id="login" class="secondary">Sign in</button>
+  <p id="authStatus" class="status"></p>
+</div>
+
+<div id="app" class="app hidden">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">ABD</div>
+      <h2>ABD AI</h2>
     </div>
-  </header>
 
-  <section id="auth" class="panel">
-    <h2>Welcome to ABD AI</h2>
-    <p class="muted">Sign in or create your account.</p>
-    <input id="email" type="email" placeholder="Email address">
-    <input id="password" type="password" placeholder="Password">
-    <button id="signup">Create account</button>
-    <button id="login" class="secondary">Sign in</button>
-    <p id="authStatus" class="status"></p>
-  </section>
+    <button class="new-chat" id="newChat">＋ New Chat</button>
 
-  <section id="chat" class="panel" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <h2 style="margin:0">Chat with ABD AI</h2>
-        <p class="muted">Ask me anything</p>
+    <div class="small-title">YOUR CONVERSATIONS</div>
+    <div id="history"></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h3>ABD AI Assistant</h3>
+      <button class="secondary" id="logout">Sign out</button>
+    </header>
+
+    <section class="content">
+      <div id="welcome" class="welcome">
+        <h1>Welcome to <span class="gradient">ABD AI</span></h1>
+        <p style="color:#929bb1">
+          What would you like to know today?
+        </p>
       </div>
-      <button id="logout" class="secondary">Sign out</button>
-    </div>
 
-    <div id="messages">
-      <div class="message assistant">
-        Hello! I'm ABD AI. How can I help you today?
+      <div id="messages"></div>
+
+      <div class="composer-area">
+        <div class="composer">
+          <textarea id="prompt"
+            placeholder="Message ABD AI..."
+            rows="1"></textarea>
+          <button id="send">Send</button>
+        </div>
+        <div id="chatStatus" class="status">
+          ABD AI is ready.
+        </div>
       </div>
-    </div>
-
-    <div class="composer">
-      <textarea id="prompt" placeholder="Ask ABD AI anything..."></textarea>
-      <button id="send">Send</button>
-    </div>
-    <p id="chatStatus" class="status"></p>
-  </section>
+    </section>
+  </main>
 </div>
 
 <script>
-  // ADD YOUR OWN SUPABASE DETAILS HERE
-  const SUPABASE_URL = "https://rvnotsdsuvfrcginjbiw.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_IIeNY6wKVAZpFREXPoqS8Q_4mXjivYf";
+// KEEP YOUR EXISTING SUPABASE DETAILS HERE
+const SUPABASE_URL = "https://rvnotsdsuvfrcginjbiw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_IIeNY6wKVAZpFREXPoqS8Q_4mXjivYf";
 
-  const db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+let conversations = [];
+let currentId = null;
+let sending = false;
+
+function saveHistory() {
+  localStorage.setItem(
+    "abd_ai_conversations",
+    JSON.stringify(conversations)
   );
+}
 
-  const auth = document.getElementById("auth");
-  const chat = document.getElementById("chat");
-  const authStatus = document.getElementById("authStatus");
-  const chatStatus = document.getElementById("chatStatus");
-  const messages = document.getElementById("messages");
-  const sendButton = document.getElementById("send");
-
-  function showMessage(text, type) {
-    const div = document.createElement("div");
-    div.className = "message " + type;
-    div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  async function updateScreen() {
-    const { data } = await db.auth.getSession();
-    const loggedIn = !!data.session;
-    auth.style.display = loggedIn ? "none" : "block";
-    chat.style.display = loggedIn ? "block" : "none";
-  }
-
-  document.getElementById("signup").onclick = async () => {
-    authStatus.textContent = "Creating account...";
-    const { error } = await db.auth.signUp({
-      email: document.getElementById("email").value.trim(),
-      password: document.getElementById("password").value
-    });
-
-    authStatus.textContent = error
-      ? error.message
-      : "Account created! Check your email if verification is required.";
-
-    await updateScreen();
+function newConversation() {
+  const conversation = {
+    id: Date.now().toString(),
+    title: "New Chat",
+    messages: [],
+    updated: Date.now()
   };
 
-  document.getElementById("login").onclick = async () => {
-    authStatus.textContent = "Signing in...";
-    const { error } = await db.auth.signInWithPassword({
-      email: document.getElementById("email").value.trim(),
-      password: document.getElementById("password").value
-    });
+  conversations.unshift(conversation);
+  currentId = conversation.id;
+  saveHistory();
+  render();
+}
 
-    authStatus.textContent = error ? error.message : "Signed in!";
-    await updateScreen();
-  };
+function currentConversation() {
+  return conversations.find(c => c.id === currentId);
+}
 
-  document.getElementById("logout").onclick = async () => {
-    await db.auth.signOut();
-    await updateScreen();
-  };
+function render() {
+  const conversation = currentConversation();
 
-  document.getElementById("send").onclick = async () => {
-    const input = document.getElementById("prompt");
-    const message = input.value.trim();
+  $("history").replaceChildren();
 
-    if (!message || sendButton.disabled) return;
-
-    input.value = "";
-    showMessage(message, "user");
-    sendButton.disabled = true;
-    chatStatus.textContent = "ABD AI is thinking...";
-
-    try {
-      const { data, error } = await db.functions.invoke(
-        "abd-ai-chat",
-        { body: { message } }
-      );
-
-      if (error) throw error;
-
-      if (!data || !data.success) {
-        throw new Error(data?.error || "AI request failed.");
-      }
-
-      showMessage(data.reply, "assistant");
-      chatStatus.textContent = "Ready";
-    } catch (err) {
-      chatStatus.textContent = "Error: " + err.message;
-    } finally {
-      sendButton.disabled = false;
-    }
-  };
-
-  db.auth.onAuthStateChange(() => {
-    updateScreen();
+  conversations.forEach(c => {
+    const button = document.createElement("button");
+    button.className = "history-item" +
+      (c.id === currentId ? " active" : "");
+    button.textContent = c.title;
+    button.onclick = () => {
+      currentId = c.id;
+      render();
+    };
+    $("history").appendChild(button);
   });
 
+  $("messages").replaceChildren();
+
+  const list = conversation ? conversation.messages : [];
+
+  $("welcome").classList.toggle("hidden", list.length > 0);
+
+  list.forEach((message, index) => {
+    const div = document.createElement("div");
+    div.className = "message " + message.role;
+
+    const text = document.createElement("div");
+    text.textContent = message.text;
+    div.appendChild(text);
+
+    if (message.role === "assistant") {
+      const actions = document.createElement("div");
+      actions.className = "message-actions";
+
+      const copy = document.createElement("button");
+      copy.textContent = "Copy response";
+      copy.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(message.text);
+          copy.textContent = "Copied!";
+        } catch {
+          copy.textContent = "Copy unavailable";
+        }
+      };
+
+      actions.appendChild(copy);
+      div.appendChild(actions);
+    }
+
+    $("messages").appendChild(div);
+  });
+
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+
+function addMessage(role, text) {
+  const conversation = currentConversation();
+  if (!conversation) return;
+
+  conversation.messages.push({ role, text });
+  conversation.updated = Date.now();
+
+  if (conversation.title === "New Chat" && role === "user") {
+    conversation.title = text.slice(0, 30);
+  }
+
+  saveHistory();
+  render();
+}
+
+async function updateScreen() {
+  const { data, error } = await db.auth.getSession();
+
+  if (error) {
+    $("authStatus").textContent = error.message;
+    return;
+  }
+
+  const loggedIn = !!data.session;
+  $("auth").classList.toggle("hidden", loggedIn);
+  $("app").classList.toggle("hidden", !loggedIn);
+
+  if (loggedIn && !currentId) {
+    loadHistory();
+  }
+}
+
+function loadHistory() {
+  try {
+    conversations = JSON.parse(
+      localStorage.getItem("abd_ai_conversations") || "[]"
+    );
+    if (!Array.isArray(conversations)) conversations = [];
+  } catch {
+    conversations = [];
+  }
+
+  if (conversations.length) {
+    conversations.sort((a,b) => b.updated - a.updated);
+    currentId = conversations[0].id;
+  } else {
+    newConversation();
+    return;
+  }
+
+  render();
+}
+
+$("signup").onclick = async () => {
+  $("authStatus").textContent = "Creating account...";
+
+  const { error } = await db.auth.signUp({
+    email: $("email").value.trim(),
+    password: $("password").value
+  });
+
+  $("authStatus").textContent = error
+    ? error.message
+    : "Account created. Check your email if verification is required.";
+
+  await updateScreen();
+};
+
+$("login").onclick = async () => {
+  $("authStatus").textContent = "Signing in...";
+
+  const { error } = await db.auth.signInWithPassword({
+    email: $("email").value.trim(),
+    password: $("password").value
+  });
+
+  $("authStatus").textContent = error
+    ? error.message
+    : "Signed in successfully.";
+
+  await updateScreen();
+};
+
+$("logout").onclick = async () => {
+  await db.auth.signOut();
+  currentId = null;
+  await updateScreen();
+};
+
+$("newChat").onclick = () => {
+  newConversation();
+  $("prompt").focus();
+};
+
+async function sendMessage() {
+  if (sending) return;
+
+  const message = $("prompt").value.trim();
+  if (!message) return;
+
+  if (!currentConversation()) newConversation();
+
+  $("prompt").value = "";
+  addMessage("user", message);
+
+  sending = true;
+  $("send").disabled = true;
+  $("chatStatus").textContent = "ABD AI is thinking...";
+
+  try {
+    const { data, error } = await db.functions.invoke(
+      "abd-ai-chat",
+      { body: { message } }
+    );
+
+    if (error) throw error;
+
+    if (!data || !data.success || !data.reply) {
+      throw new Error(data?.error || "AI response was empty.");
+    }
+
+    addMessage("assistant", data.reply);
+    $("chatStatus").textContent = "Ready";
+  } catch (err) {
+    $("chatStatus").textContent = "Error: " + err.message;
+  } finally {
+    sending = false;
+    $("send").disabled = false;
+    $("prompt").focus();
+  }
+}
+
+$("send").onclick = sendMessage;
+
+$("prompt").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+db.auth.onAuthStateChange(() => {
   updateScreen();
+});
+
+updateScreen();
 </script>
 </body>
 </html>
