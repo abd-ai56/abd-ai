@@ -8,42 +8,85 @@
 <title>ABD AI</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-* { box-sizing: border-box; }
+</head>
 
-body {
+<style>
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #212121;
+  --sidebar: #171717;
+  --surface: #303030;
+  --surface-hover: #383838;
+  --text: #ececec;
+  --muted: #9b9b9b;
+  --border: #3b3b3b;
+}
+
+html, body {
   margin: 0;
-  background: #090d18;
-  color: #f5f7ff;
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
   font-family: Arial, sans-serif;
 }
 
-button, textarea, input { font: inherit; }
+body {
+  min-height: 100vh;
+}
+
+button, input, textarea {
+  font: inherit;
+}
 
 button {
   cursor: pointer;
+  color: var(--text);
+  background: transparent;
   border: 0;
   border-radius: 10px;
-  padding: 11px 15px;
-  color: white;
-  background: #625cff;
+  padding: 10px 13px;
 }
 
-button:disabled { opacity: .5; }
+button:hover {
+  background: var(--surface-hover);
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Main application */
 
 .app {
-  max-width: 1100px;
-  margin: auto;
+  width: 100%;
+  max-width: none;
   min-height: 100vh;
   display: flex;
+  margin: 0;
+  background: var(--bg);
 }
 
+/* Sidebar */
+
 .sidebar {
-  width: 250px;
-  flex-shrink: 0;
-  background: #0e1423;
-  border-right: 1px solid #252e43;
-  padding: 18px;
+  width: 260px;
+  min-width: 260px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--sidebar);
+  padding: 14px 12px;
+  border: 0;
   display: flex;
   flex-direction: column;
 }
@@ -51,78 +94,113 @@ button:disabled { opacity: .5; }
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 25px;
+  gap: 11px;
+  margin: 5px 5px 28px;
 }
 
 .logo {
-  width: 43px;
-  height: 43px;
-  border-radius: 13px;
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
+  border-radius: 50%;
+  background: #303030;
+  color: white;
+  font-size: 12px;
   font-weight: bold;
-  background: linear-gradient(135deg,#2563eb,#9333ea);
 }
 
-.brand h2 { margin: 0; font-size: 20px; }
+.brand h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+}
 
 .new-chat {
   width: 100%;
-  background: #242d43;
-  border: 1px solid #35405a;
   text-align: left;
-  margin-bottom: 20px;
+  background: transparent;
+  border: 1px solid #444;
+  margin-bottom: 27px;
+  font-size: 14px;
+}
+
+.new-chat:hover {
+  background: var(--surface);
 }
 
 .small-title {
-  color: #8995ad;
+  color: var(--muted);
   font-size: 12px;
-  margin-bottom: 10px;
+  margin: 0 8px 10px;
 }
 
 #history {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 3px;
   overflow-y: auto;
 }
 
 .history-item {
-  background: transparent;
+  width: 100%;
   text-align: left;
-  color: #c8d0e0;
+  font-size: 13px;
+  color: #d6d6d6;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  padding: 10px;
 }
 
-.history-item.active { background: #252e43; }
+.history-item.active {
+  background: #303030;
+}
+
+/* Main chat area */
 
 .main {
   flex: 1;
   min-width: 0;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  background: var(--bg);
 }
 
 .topbar {
-  padding: 17px 20px;
-  border-bottom: 1px solid #252e43;
+  height: 58px;
+  flex-shrink: 0;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border: 0;
+  background: var(--bg);
 }
 
-.topbar h3 { margin: 0; font-size: 17px; }
+.topbar h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+#logout {
+  font-size: 13px;
+  background: transparent;
+  color: #bdbdbd;
+}
+
+/* Conversation content */
 
 .content {
   width: 100%;
-  max-width: 800px;
-  padding: 20px;
-  margin: auto;
+  max-width: 850px;
   flex: 1;
+  min-height: calc(100vh - 58px);
+  margin: 0 auto;
+  padding: 20px 24px 12px;
   display: flex;
   flex-direction: column;
 }
@@ -133,203 +211,248 @@ button:disabled { opacity: .5; }
   padding: 35px 10px;
 }
 
-.welcome h1 { font-size: 32px; }
+.welcome h1 {
+  font-size: 30px;
+  font-weight: 600;
+  color: #ececec;
+}
 
 .gradient {
-  background: linear-gradient(90deg,#60a5fa,#c084fc);
-  -webkit-background-clip: text;
-  color: transparent;
+  color: #ececec;
+  background: none;
+  -webkit-text-fill-color: #ececec;
 }
+
+.welcome p {
+  color: #a0a0a0 !important;
+  font-size: 15px;
+}
+
+/* Messages */
 
 #messages {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding-bottom: 25px;
+  gap: 25px;
+  padding: 20px 0 30px;
 }
 
 .message {
-  padding: 15px;
-  border-radius: 14px;
-  max-width: 95%;
-  line-height: 1.65;
+  max-width: 85%;
+  padding: 12px 17px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .user {
-  background: #263a70;
   align-self: flex-end;
+  background: #303030;
+  color: #ececec;
 }
 
 .assistant {
-  background: #171f32;
   align-self: flex-start;
+  background: transparent;
+  color: #ececec;
+  padding-left: 3px;
 }
 
-.message-actions { margin-top: 9px; }
+.message-actions {
+  margin-top: 12px;
+}
 
 .message-actions button {
-  background: #303a50;
   font-size: 12px;
   padding: 7px 10px;
+  color: #aaa;
+  background: transparent;
 }
+
+/* Message composer */
 
 .composer-area {
   position: sticky;
   bottom: 0;
-  background: #090d18;
+  width: 100%;
+  background: var(--bg);
   padding: 12px 0 18px;
+  margin-top: auto;
+}
+
+#webSearchToggle {
+  background: transparent;
+  border: 1px solid #444;
+  color: #c5c5c5;
+  border-radius: 20px;
+  padding: 8px 12px;
+  font-size: 12px;
+  margin-bottom: 10px;
 }
 
 .composer {
   display: flex;
-  gap: 9px;
-  background: #151e30;
-  border: 1px solid #34405a;
-  border-radius: 15px;
-  padding: 9px;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+  background: #303030;
+  border: 1px solid #444;
+  border-radius: 25px;
+  padding: 10px 12px;
 }
 
-textarea, input {
-  background: transparent;
-  color: white;
-  border: 0;
-  outline: none;
-  width: 100%;
+.composer:focus-within {
+  border-color: #666;
 }
 
 textarea {
-  resize: none;
-  min-height: 45px;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
   max-height: 150px;
+  resize: none;
   padding: 12px 5px;
+  color: white;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: 15px;
+}
+
+textarea::placeholder {
+  color: #a0a0a0;
+}
+
+#send {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: #f1f1f1;
+  color: #171717;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#send:hover {
+  background: white;
 }
 
 .status {
-  color: #9ba8c2;
-  font-size: 12px;
-  min-height: 18px;
-  margin-top: 8px;
+  color: #888;
+  font-size: 11px;
+  min-height: 17px;
+  margin: 8px 10px 0;
 }
 
+/* Login screen */
+
 .auth-box {
-  max-width: 420px;
-  margin: 70px auto;
-  padding: 25px;
-  background: #151e30;
-  border: 1px solid #303b55;
-  border-radius: 17px;
+  width: calc(100% - 30px);
+  max-width: 390px;
+  margin: 80px auto;
+  padding: 28px;
+  background: #303030;
+  border: 1px solid #444;
+  border-radius: 18px;
 }
 
 .auth-box input {
+  width: 100%;
   padding: 14px;
   margin: 8px 0;
-  border: 1px solid #34405a;
-  border-radius: 9px;
-  background: #090d18;
+  color: white;
+  background: #212121;
+  border: 1px solid #505050;
+  border-radius: 10px;
 }
 
-.auth-box button { margin-top: 10px; }
+.auth-box button {
+  width: 100%;
+  margin-top: 10px;
+  background: #ececec;
+  color: #171717;
+}
 
-.secondary { background: #303a50; }
+.auth-box .secondary {
+  background: #444;
+  color: white;
+}
 
-.hidden { display: none !important; }
+/* Mobile layout */
 
-@media(max-width:650px) {
+@media (max-width: 650px) {
   .sidebar {
     width: 76px;
-    padding: 12px 7px;
+    min-width: 76px;
+    padding: 12px 5px;
   }
+
   .brand {
     flex-direction: column;
     gap: 5px;
+    margin: 5px 0 25px;
   }
-  .brand h2 { font-size: 10px; }
+
+  .brand h2 {
+    font-size: 10px;
+  }
+
   .new-chat {
     text-align: center;
-    padding: 12px 3px;
+    padding: 10px 2px;
     font-size: 11px;
   }
-  .small-title { font-size: 9px; text-align: center; }
+
+  .small-title {
+    font-size: 9px;
+    text-align: center;
+    margin: 0 0 8px;
+  }
+
   .history-item {
     font-size: 10px;
     padding: 9px 3px;
   }
-  .content { padding: 13px; }
-  .topbar { padding: 14px; }
-  .message { max-width: 100%; }
+
+  .topbar {
+    padding: 0 12px;
+    height: 52px;
+  }
+
+  .topbar h3 {
+    font-size: 14px;
+  }
+
+  .content {
+    min-height: calc(100vh - 52px);
+    padding: 12px 12px 8px;
+  }
+
+  .welcome h1 {
+    font-size: 25px;
+  }
+
+  .message {
+    max-width: 95%;
+    font-size: 14px;
+  }
+
+  .composer {
+    border-radius: 23px;
+    padding: 7px 9px;
+  }
+
+  textarea {
+    font-size: 14px;
+  }
 }
-
-/* ABD AI - ChatGPT inspired theme */
-
-:root {
-  color-scheme: dark;
-  --bg: #212121;
-  --sidebar: #171717;
-  --surface: #303030;
-  --text: #ececec;
-  --muted: #a0a0a0;
-  --border: #3a3a3a;
-  --accent: #ffffff;
-}
-
-html, body {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-}
-
-body {
-  font-family: Arial, sans-serif;
-}
-
-aside, .sidebar {
-  background: var(--sidebar) !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
-}
-
-main, .chat-area, .chat-container {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-}
-
-header, nav {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
-}
-
-input, textarea, .composer, .composer-area {
-  background: var(--surface) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 16px !important;
-}
-
-button {
-  border-radius: 12px;
-}
-
-button:hover {
-  filter: brightness(1.15);
-}
-
-p, span, label {
-  color: inherit;
-}
-
-a {
-  color: #b4b4b4;
-}
-
-::placeholder {
-  color: var(--muted) !important;
-}
-
-</style>
-</head>
-
+  </style>
+  
 <body>
 
 <div id="auth" class="auth-box">
